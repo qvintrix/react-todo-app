@@ -28,7 +28,9 @@ class App extends Component {
 				this.createToDoItem('Drink Coffee'),
 				this.createToDoItem('Make Awesome App'),
 				this.createToDoItem('Have a lunch')
-			]
+			],
+			term: '',
+			filter: 'all'
 		};
 
 		this.deleteItem = (id) => {
@@ -82,11 +84,50 @@ class App extends Component {
 					todoData: this.toggleProperty(todoData, id, 'done')
 				}
 			});
+		};
+
+		this.search = (items, term) => {
+			if (term.length === 0) {
+				return items;
+			}
+
+			return items.filter((item) => {
+				return item.label.toLowerCase().indexOf(term.toLowerCase()) > -1
+			})
+		};
+
+		this.onSearchChange = (term) => {
+			this.setState({
+				term
+			})
+		};
+
+		this.onFilterChange = (filter) => {
+			this.setState({
+				filter
+			})
+		};
+
+		this.filter = (items, filter) => {
+			switch (filter) {
+				case 'all':
+					return items;
+				case 'active':
+					return items.filter((item) => !item.done);
+				case 'done':
+					return items.filter((item) => item.done);
+				default:
+					return items;
+			}
 		}
 	}
 
 	render() {
-		const { todoData } = this.state;
+		const { todoData, term, filter } = this.state;
+
+		const visibleItem = this.filter(
+			this.search(todoData, term), filter
+		);
 		const doneCount = todoData.filter((el) => el.done === true).length;
 		const toDoCount = todoData.length - doneCount;
 
@@ -94,11 +135,11 @@ class App extends Component {
 			<div className="todo-app">
 				<AppHeader toDo={toDoCount} done={doneCount}/>
 				<div className="top-panel d-flex">
-					<SearchPanel/>
-					<ItemStatusFilter/>
+					<SearchPanel onSearchChange={this.onSearchChange}/>
+					<ItemStatusFilter filter={filter} onFilterChange={this.onFilterChange}/>
 				</div>
 
-				<TodoList todos={todoData}
+				<TodoList todos={visibleItem}
 					onDeleted={this.deleteItem}
 					onToggleImportant={this.onToggleImportant}
 					onToggleDone={this.onToggleDone}/>
